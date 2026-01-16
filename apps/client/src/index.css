@@ -1,0 +1,485 @@
+@import "tailwindcss";
+
+/* Base theme variables */
+@theme {
+  /* Default theme colors */
+  --color-background: oklch(0.98 0 0);
+  --color-foreground: oklch(0.09 0 0);
+  --color-card: oklch(0.98 0 0);
+  --color-card-foreground: oklch(0.09 0 0);
+  --color-popover: oklch(0.98 0 0);
+  --color-popover-foreground: oklch(0.09 0 0);
+  --color-primary: oklch(0.09 0 0);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.96 0 0);
+  --color-secondary-foreground: oklch(0.09 0 0);
+  --color-muted: oklch(0.96 0 0);
+  --color-muted-foreground: oklch(0.45 0 0);
+  --color-accent: oklch(0.96 0 0);
+  --color-accent-foreground: oklch(0.09 0 0);
+  --color-destructive: oklch(0.58 0.24 28.48);
+  --color-destructive-foreground: oklch(0.98 0 0);
+  --color-border: oklch(0.89 0 0);
+  --color-input: oklch(0.89 0 0);
+  --color-ring: oklch(0.09 0 0);
+
+  --radius: 0.5rem;
+}
+
+/* Dark mode variables */
+.dark {
+  --color-background: oklch(0.09 0 0);
+  --color-foreground: oklch(0.98 0 0);
+  --color-card: oklch(0.09 0 0);
+  --color-card-foreground: oklch(0.98 0 0);
+  --color-popover: oklch(0.09 0 0);
+  --color-popover-foreground: oklch(0.98 0 0);
+  --color-primary: oklch(0.98 0 0);
+  --color-primary-foreground: oklch(0.09 0 0);
+  --color-secondary: oklch(0.14 0 0);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-muted: oklch(0.14 0 0);
+  --color-muted-foreground: oklch(0.64 0 0);
+  --color-accent: oklch(0.14 0 0);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-destructive: oklch(0.62 0.24 28.48);
+  --color-destructive-foreground: oklch(0.98 0 0);
+  --color-border: oklch(0.27 0 0);
+  --color-input: oklch(0.27 0 0);
+  --color-ring: oklch(0.83 0 0);
+}
+
+/* ========================================
+   FOREST THEME
+   ======================================== */
+
+/* Forest Light */
+[data-theme="forest"].light {
+  --color-background: oklch(0.98 0 0);
+  --color-foreground: oklch(0.09 0 0);
+  --color-card: oklch(0.99 0 0);
+  --color-card-foreground: oklch(0.09 0 0);
+  --color-primary: oklch(0.64 0.18 155);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-secondary: oklch(0.93 0 0);
+  --color-secondary-foreground: oklch(0.09 0 0);
+  --color-accent: oklch(0.95 0.05 155);
+  --color-accent-foreground: oklch(0.09 0 0);
+  --color-muted: oklch(0.93 0 0);
+  --color-muted-foreground: oklch(0.45 0 0);
+  --color-border: oklch(0.88 0 0);
+  --color-input: oklch(0.88 0 0);
+  --color-ring: oklch(0.64 0.18 155);
+}
+
+/* Forest Dark */
+[data-theme="forest"].dark {
+  --color-background: oklch(0.09 0 0);
+  --color-foreground: oklch(0.98 0 0);
+  --color-card: oklch(0.11 0 0);
+  --color-card-foreground: oklch(0.98 0 0);
+  --color-primary: oklch(0.64 0.18 155);
+  --color-primary-foreground: oklch(0.09 0 0);
+  --color-secondary: oklch(0.18 0 0);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.15 0.08 155);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-muted: oklch(0.18 0 0);
+  --color-muted-foreground: oklch(0.64 0 0);
+  --color-border: oklch(0.25 0 0);
+  --color-input: oklch(0.25 0 0);
+  --color-ring: oklch(0.64 0.18 155);
+}
+
+/* ========================================
+   NATURE THEME
+   ======================================== */
+
+/* Nature Light */
+[data-theme="nature"].light {
+  --color-background: oklch(0.97 0.02 120);
+  --color-foreground: oklch(0.25 0.08 160);
+  --color-card: oklch(0.98 0.01 120);
+  --color-card-foreground: oklch(0.25 0.08 160);
+  --color-primary: oklch(0.55 0.20 160);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.85 0.10 140);
+  --color-secondary-foreground: oklch(0.25 0.08 160);
+  --color-accent: oklch(0.75 0.18 80);
+  --color-accent-foreground: oklch(0.25 0.08 160);
+  --color-muted: oklch(0.90 0.05 140);
+  --color-muted-foreground: oklch(0.50 0.08 160);
+  --color-border: oklch(0.85 0.05 140);
+  --color-input: oklch(0.85 0.05 140);
+  --color-ring: oklch(0.55 0.20 160);
+}
+
+/* Nature Dark */
+[data-theme="nature"].dark {
+  --color-background: oklch(0.15 0.03 150);
+  --color-foreground: oklch(0.90 0.05 120);
+  --color-card: oklch(0.18 0.04 150);
+  --color-card-foreground: oklch(0.90 0.05 120);
+  --color-primary: oklch(0.60 0.18 140);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.25 0.08 160);
+  --color-secondary-foreground: oklch(0.90 0.05 120);
+  --color-accent: oklch(0.35 0.12 100);
+  --color-accent-foreground: oklch(0.90 0.05 120);
+  --color-muted: oklch(0.25 0.08 160);
+  --color-muted-foreground: oklch(0.65 0.08 140);
+  --color-border: oklch(0.30 0.08 150);
+  --color-input: oklch(0.30 0.08 150);
+  --color-ring: oklch(0.60 0.18 140);
+}
+
+/* ========================================
+   AMERICA THEME
+   ======================================== */
+
+/* America Light */
+[data-theme="america"].light {
+  --color-background: oklch(0.98 0 0);
+  --color-foreground: oklch(0.15 0 0);
+  --color-card: oklch(0.99 0 0);
+  --color-card-foreground: oklch(0.15 0 0);
+  --color-primary: oklch(0.45 0.25 28);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.35 0.15 260);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.92 0.02 50);
+  --color-accent-foreground: oklch(0.15 0 0);
+  --color-muted: oklch(0.92 0 0);
+  --color-muted-foreground: oklch(0.50 0 0);
+  --color-border: oklch(0.88 0 0);
+  --color-input: oklch(0.88 0 0);
+  --color-ring: oklch(0.45 0.25 28);
+}
+
+/* America Dark */
+[data-theme="america"].dark {
+  --color-background: oklch(0.12 0.02 270);
+  --color-foreground: oklch(0.95 0 0);
+  --color-card: oklch(0.15 0.03 270);
+  --color-card-foreground: oklch(0.95 0 0);
+  --color-primary: oklch(0.55 0.28 28);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.45 0.20 260);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.20 0.05 270);
+  --color-accent-foreground: oklch(0.95 0 0);
+  --color-muted: oklch(0.20 0.05 270);
+  --color-muted-foreground: oklch(0.65 0 0);
+  --color-border: oklch(0.28 0.05 270);
+  --color-input: oklch(0.28 0.05 270);
+  --color-ring: oklch(0.55 0.28 28);
+}
+
+/* ========================================
+   OCEAN THEME
+   ======================================== */
+
+/* Ocean Light */
+[data-theme="ocean"].light {
+  --color-background: oklch(0.95 0.02 240);
+  --color-foreground: oklch(0.20 0.08 250);
+  --color-card: oklch(0.97 0.01 240);
+  --color-card-foreground: oklch(0.20 0.08 250);
+  --color-primary: oklch(0.50 0.18 240);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.45 0.15 200);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.85 0.08 220);
+  --color-accent-foreground: oklch(0.20 0.08 250);
+  --color-muted: oklch(0.88 0.04 240);
+  --color-muted-foreground: oklch(0.50 0.08 240);
+  --color-border: oklch(0.82 0.06 240);
+  --color-input: oklch(0.82 0.06 240);
+  --color-ring: oklch(0.50 0.18 240);
+}
+
+/* Ocean Dark */
+[data-theme="ocean"].dark {
+  --color-background: oklch(0.12 0.04 250);
+  --color-foreground: oklch(0.92 0.03 220);
+  --color-card: oklch(0.15 0.05 250);
+  --color-card-foreground: oklch(0.92 0.03 220);
+  --color-primary: oklch(0.55 0.20 220);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.45 0.18 200);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.22 0.08 240);
+  --color-accent-foreground: oklch(0.92 0.03 220);
+  --color-muted: oklch(0.22 0.08 240);
+  --color-muted-foreground: oklch(0.65 0.08 230);
+  --color-border: oklch(0.28 0.10 245);
+  --color-input: oklch(0.28 0.10 245);
+  --color-ring: oklch(0.55 0.20 220);
+}
+
+/* ========================================
+   SUNSET THEME
+   ======================================== */
+
+/* Sunset Light */
+[data-theme="sunset"].light {
+  --color-background: oklch(0.96 0.03 40);
+  --color-foreground: oklch(0.20 0.05 30);
+  --color-card: oklch(0.98 0.02 40);
+  --color-card-foreground: oklch(0.20 0.05 30);
+  --color-primary: oklch(0.60 0.22 40);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.65 0.20 60);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.88 0.08 50);
+  --color-accent-foreground: oklch(0.20 0.05 30);
+  --color-muted: oklch(0.90 0.05 40);
+  --color-muted-foreground: oklch(0.50 0.05 30);
+  --color-border: oklch(0.85 0.06 40);
+  --color-input: oklch(0.85 0.06 40);
+  --color-ring: oklch(0.60 0.22 40);
+}
+
+/* Sunset Dark */
+[data-theme="sunset"].dark {
+  --color-background: oklch(0.15 0.04 20);
+  --color-foreground: oklch(0.92 0.03 50);
+  --color-card: oklch(0.18 0.05 20);
+  --color-card-foreground: oklch(0.92 0.03 50);
+  --color-primary: oklch(0.55 0.24 35);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.45 0.22 350);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.25 0.10 340);
+  --color-accent-foreground: oklch(0.92 0.03 50);
+  --color-muted: oklch(0.25 0.08 20);
+  --color-muted-foreground: oklch(0.65 0.06 40);
+  --color-border: oklch(0.30 0.10 25);
+  --color-input: oklch(0.30 0.10 25);
+  --color-ring: oklch(0.55 0.24 35);
+}
+
+/* ========================================
+   LAVENDER HAZE THEME
+   ======================================== */
+
+/* Lavender Haze Light */
+[data-theme="lavender"].light {
+  --color-background: oklch(0.97 0.03 300);
+  --color-foreground: oklch(0.25 0.08 310);
+  --color-card: oklch(0.98 0.02 300);
+  --color-card-foreground: oklch(0.25 0.08 310);
+  --color-primary: oklch(0.60 0.18 300);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.70 0.15 320);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.90 0.08 290);
+  --color-accent-foreground: oklch(0.25 0.08 310);
+  --color-muted: oklch(0.92 0.04 300);
+  --color-muted-foreground: oklch(0.50 0.08 310);
+  --color-border: oklch(0.87 0.06 300);
+  --color-input: oklch(0.87 0.06 300);
+  --color-ring: oklch(0.60 0.18 300);
+}
+
+/* Lavender Haze Dark */
+[data-theme="lavender"].dark {
+  --color-background: oklch(0.14 0.04 310);
+  --color-foreground: oklch(0.92 0.04 300);
+  --color-card: oklch(0.17 0.05 310);
+  --color-card-foreground: oklch(0.92 0.04 300);
+  --color-primary: oklch(0.65 0.20 295);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.55 0.18 320);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.22 0.08 300);
+  --color-accent-foreground: oklch(0.92 0.04 300);
+  --color-muted: oklch(0.22 0.06 310);
+  --color-muted-foreground: oklch(0.68 0.08 300);
+  --color-border: oklch(0.28 0.08 305);
+  --color-input: oklch(0.28 0.08 305);
+  --color-ring: oklch(0.65 0.20 295);
+}
+
+/* ========================================
+   HALLOWEEN THEME (October only)
+   ======================================== */
+
+/* Halloween Light */
+[data-theme="halloween"].light {
+  --color-background: oklch(0.98 0.02 45);
+  --color-foreground: oklch(0.15 0.03 40);
+  --color-card: oklch(0.99 0.01 45);
+  --color-card-foreground: oklch(0.15 0.03 40);
+  --color-primary: oklch(0.65 0.20 40);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.20 0.02 0);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.88 0.08 50);
+  --color-accent-foreground: oklch(0.15 0.03 40);
+  --color-muted: oklch(0.90 0.04 40);
+  --color-muted-foreground: oklch(0.45 0.03 35);
+  --color-border: oklch(0.85 0.06 40);
+  --color-input: oklch(0.85 0.06 40);
+  --color-ring: oklch(0.65 0.20 40);
+}
+
+/* Halloween Dark */
+[data-theme="halloween"].dark {
+  --color-background: oklch(0.10 0.02 30);
+  --color-foreground: oklch(0.92 0.05 45);
+  --color-card: oklch(0.13 0.03 30);
+  --color-card-foreground: oklch(0.92 0.05 45);
+  --color-primary: oklch(0.60 0.24 35);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.18 0.02 0);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.25 0.12 285);
+  --color-accent-foreground: oklch(0.92 0.05 45);
+  --color-muted: oklch(0.22 0.05 30);
+  --color-muted-foreground: oklch(0.65 0.06 40);
+  --color-border: oklch(0.28 0.08 35);
+  --color-input: oklch(0.28 0.08 35);
+  --color-ring: oklch(0.60 0.24 35);
+}
+
+/* ========================================
+   WINTER HOLIDAY THEME (December only)
+   ======================================== */
+
+/* Winter Light */
+[data-theme="winter"].light {
+  --color-background: oklch(0.98 0.01 0);
+  --color-foreground: oklch(0.20 0.05 150);
+  --color-card: oklch(0.99 0 0);
+  --color-card-foreground: oklch(0.20 0.05 150);
+  --color-primary: oklch(0.50 0.22 25);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.40 0.15 150);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.70 0.15 75);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-muted: oklch(0.93 0.02 200);
+  --color-muted-foreground: oklch(0.50 0.05 160);
+  --color-border: oklch(0.88 0.03 180);
+  --color-input: oklch(0.88 0.03 180);
+  --color-ring: oklch(0.50 0.22 25);
+}
+
+/* Winter Dark */
+[data-theme="winter"].dark {
+  --color-background: oklch(0.12 0.03 160);
+  --color-foreground: oklch(0.95 0.02 0);
+  --color-card: oklch(0.15 0.04 160);
+  --color-card-foreground: oklch(0.95 0.02 0);
+  --color-primary: oklch(0.55 0.25 20);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.35 0.18 145);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.60 0.18 70);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-muted: oklch(0.20 0.05 170);
+  --color-muted-foreground: oklch(0.68 0.04 160);
+  --color-border: oklch(0.28 0.08 160);
+  --color-input: oklch(0.28 0.08 160);
+  --color-ring: oklch(0.55 0.25 20);
+}
+
+/* ========================================
+   VALENTINE THEME (February only)
+   ======================================== */
+
+/* Valentine Light */
+[data-theme="valentine"].light {
+  --color-background: oklch(0.97 0.03 350);
+  --color-foreground: oklch(0.25 0.08 355);
+  --color-card: oklch(0.98 0.02 350);
+  --color-card-foreground: oklch(0.25 0.08 355);
+  --color-primary: oklch(0.65 0.20 350);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.55 0.24 10);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.88 0.08 340);
+  --color-accent-foreground: oklch(0.25 0.08 355);
+  --color-muted: oklch(0.92 0.04 350);
+  --color-muted-foreground: oklch(0.50 0.08 355);
+  --color-border: oklch(0.87 0.06 350);
+  --color-input: oklch(0.87 0.06 350);
+  --color-ring: oklch(0.65 0.20 350);
+}
+
+/* Valentine Dark */
+[data-theme="valentine"].dark {
+  --color-background: oklch(0.14 0.04 355);
+  --color-foreground: oklch(0.92 0.04 350);
+  --color-card: oklch(0.17 0.05 355);
+  --color-card-foreground: oklch(0.92 0.04 350);
+  --color-primary: oklch(0.60 0.22 345);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.45 0.26 15);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.25 0.10 340);
+  --color-accent-foreground: oklch(0.92 0.04 350);
+  --color-muted: oklch(0.22 0.06 355);
+  --color-muted-foreground: oklch(0.68 0.08 350);
+  --color-border: oklch(0.28 0.08 350);
+  --color-input: oklch(0.28 0.08 350);
+  --color-ring: oklch(0.60 0.22 345);
+}
+
+/* ========================================
+   SPRING BLOOM THEME (April only)
+   ======================================== */
+
+/* Spring Light */
+[data-theme="spring"].light {
+  --color-background: oklch(0.98 0.03 160);
+  --color-foreground: oklch(0.25 0.06 170);
+  --color-card: oklch(0.99 0.02 160);
+  --color-card-foreground: oklch(0.25 0.06 170);
+  --color-primary: oklch(0.75 0.12 160);
+  --color-primary-foreground: oklch(0.20 0.06 170);
+  --color-secondary: oklch(0.78 0.12 90);
+  --color-secondary-foreground: oklch(0.20 0.06 170);
+  --color-accent: oklch(0.85 0.10 280);
+  --color-accent-foreground: oklch(0.25 0.06 170);
+  --color-muted: oklch(0.92 0.04 180);
+  --color-muted-foreground: oklch(0.50 0.06 170);
+  --color-border: oklch(0.87 0.06 170);
+  --color-input: oklch(0.87 0.06 170);
+  --color-ring: oklch(0.75 0.12 160);
+}
+
+/* Spring Dark */
+[data-theme="spring"].dark {
+  --color-background: oklch(0.14 0.04 170);
+  --color-foreground: oklch(0.90 0.05 160);
+  --color-card: oklch(0.17 0.05 170);
+  --color-card-foreground: oklch(0.90 0.05 160);
+  --color-primary: oklch(0.65 0.15 165);
+  --color-primary-foreground: oklch(0.98 0 0);
+  --color-secondary: oklch(0.55 0.15 85);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-accent: oklch(0.35 0.12 275);
+  --color-accent-foreground: oklch(0.90 0.05 160);
+  --color-muted: oklch(0.22 0.06 175);
+  --color-muted-foreground: oklch(0.68 0.08 165);
+  --color-border: oklch(0.28 0.08 170);
+  --color-input: oklch(0.28 0.08 170);
+  --color-ring: oklch(0.65 0.15 165);
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

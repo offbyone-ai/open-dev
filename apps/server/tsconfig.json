@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["bun-types"],
+    "paths": {
+      "@open-dev/shared": ["../../packages/shared/src"]
+    }
+  },
+  "include": ["./**/*.ts"],
+  "references": [{ "path": "../../packages/shared" }]
+}
