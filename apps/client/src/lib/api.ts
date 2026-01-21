@@ -4,6 +4,10 @@ export type {
   TaskPriority,
   Task,
   CreateTask,
+  TaskWithDependencyInfo,
+  DependencyValidationResult,
+  TaskExecutionOrder,
+  DependencyGraph,
   Project,
   CreateProject,
   AIProvider,
@@ -26,11 +30,42 @@ export type {
   AgentTaskCompletedEvent,
   AgentDoneEvent,
   AgentErrorEvent,
+  AgentQuestion,
+  AgentQuestionEvent,
+  AgentQuestionAnsweredEvent,
   StartingPath,
   DirectoryEntry,
   BrowseResult,
   TestProviderResult,
   ModelInfo,
+  TaskTemplate,
+  CreateTaskTemplate,
+  // File watcher types
+  FileChangeType,
+  FileChangeEvent,
+  FileWatcherOptions,
+  FileWatcherStatus,
+  FileWatcherStatusEvent,
+  FileWatcherChangeEvent,
+  FileWatcherHeartbeatEvent,
+  FileWatcherErrorEvent,
+  // Execution history types
+  ExecutionHistoryItem,
+  ExecutionHistoryDetail,
+  ExecutionHistoryFilters,
+  ExecutionHistoryStats,
+  // GitHub integration types
+  GitHubSyncDirection,
+  GitHubIssueState,
+  GitHubIntegration,
+  CreateGitHubIntegration,
+  UpdateGitHubIntegration,
+  GitHubIssueMapping,
+  GitHubIssue,
+  GitHubSyncLog,
+  GitHubImportResult,
+  GitHubExportResult,
+  GitHubConnectionTestResult,
 } from "@open-dev/shared";
 
 export { DEFAULT_TOOL_APPROVAL_SETTINGS } from "@open-dev/shared";
@@ -39,6 +74,7 @@ import type {
   Task,
   CreateTask,
   TaskStatus,
+  DependencyGraph,
   Project,
   CreateProject,
   AIProvider,
@@ -53,6 +89,21 @@ import type {
   StartingPath,
   BrowseResult,
   TestProviderResult,
+  TaskTemplate,
+  CreateTaskTemplate,
+  FileWatcherStatus,
+  ExecutionHistoryItem,
+  ExecutionHistoryDetail,
+  ExecutionHistoryFilters,
+  ExecutionHistoryStats,
+  GitHubIntegration,
+  CreateGitHubIntegration,
+  UpdateGitHubIntegration,
+  GitHubIssueMapping,
+  GitHubSyncLog,
+  GitHubImportResult,
+  GitHubExportResult,
+  GitHubConnectionTestResult,
 } from "@open-dev/shared";
 
 const API_BASE = "/api";
@@ -114,6 +165,10 @@ export const tasksAPI = {
     method: "POST",
     body: JSON.stringify(data),
   }),
+  // Dependency-related APIs
+  getDependencyGraph: (projectId: string) => fetchAPI<DependencyGraph>(`/projects/${projectId}/tasks/dependency-graph`),
+  getExecutionOrder: (projectId: string) => fetchAPI<Array<{ task: Task; canStart: boolean }>>(`/projects/${projectId}/tasks/execution-order`),
+  canStart: (projectId: string, taskId: string) => fetchAPI<{ canStart: boolean; blockingTasks: Task[] }>(`/projects/${projectId}/tasks/${taskId}/can-start`),
 };
 
 // AI Providers
@@ -240,6 +295,50 @@ export const agentAPI = {
       method: "POST",
       body: JSON.stringify(settings),
     }),
+
+  // Read single file content for diff preview
+  readFileContent: (projectId: string, filePath: string) =>
+    fetchAPI<{ content: string; exists: boolean }>(
+      `/projects/${projectId}/file-content?path=${encodeURIComponent(filePath)}`
+    ),
+
+  // Read multiple file contents for diff preview (batch)
+  readFileContents: (projectId: string, paths: string[]) =>
+    fetchAPI<Record<string, { content: string; exists: boolean }>>(
+      `/projects/${projectId}/file-contents`,
+      {
+        method: "POST",
+        body: JSON.stringify({ paths }),
+      }
+    ),
+
+  // Get pending questions for an execution
+  getPendingQuestions: (executionId: string) =>
+    fetchAPI<Array<{ id: string; question: string; context: string | null; status: string }>>(
+      `/agent/executions/${executionId}/questions`
+    ),
+
+  // Answer a question
+  answerQuestion: (executionId: string, questionId: string, response: string) =>
+    fetchAPI<{ success: boolean; response: string }>(
+      `/agent/executions/${executionId}/questions/${questionId}/answer`,
+      {
+        method: "POST",
+        body: JSON.stringify({ response }),
+      }
+    ),
+
+  // Resume execution after answering questions - returns fetch response for SSE
+  resumeExecution: async (executionId: string): Promise<Response> => {
+    const response = await fetch(
+      `${API_BASE}/agent/executions/${executionId}/resume`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+    return response;
+  },
 };
 
 // Helper to parse agent action
@@ -268,4 +367,131 @@ export const filesystemAPI = {
       method: "POST",
       body: JSON.stringify({ path }),
     }),
+};
+
+// Task Templates API
+export const taskTemplatesAPI = {
+  list: (projectId: string) => fetchAPI<TaskTemplate[]>(`/projects/${projectId}/templates`),
+  get: (projectId: string, templateId: string) => fetchAPI<TaskTemplate>(`/projects/${projectId}/templates/${templateId}`),
+  create: (projectId: string, data: CreateTaskTemplate) => fetchAPI<{ id: string }>(`/projects/${projectId}/templates`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
+  update: (projectId: string, templateId: string, data: Partial<CreateTaskTemplate>) => fetchAPI<{ success: boolean }>(`/projects/${projectId}/templates/${templateId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  }),
+  delete: (projectId: string, templateId: string) => fetchAPI<{ success: boolean }>(`/projects/${projectId}/templates/${templateId}`, {
+    method: "DELETE",
+  }),
+};
+
+// File Watcher API
+export const fileWatcherAPI = {
+  // Get file watcher status for a project
+  getStatus: (projectId: string) =>
+    fetchAPI<FileWatcherStatus>(`/projects/${projectId}/file-watcher/status`),
+
+  // Start watching for file changes - returns fetch response for SSE
+  startWatch: async (projectId: string): Promise<Response> => {
+    const response = await fetch(
+      `${API_BASE}/projects/${projectId}/file-watcher/watch`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+    return response;
+  },
+
+  // Stop watching for file changes
+  stopWatch: (projectId: string) =>
+    fetchAPI<{ success: boolean }>(`/projects/${projectId}/file-watcher/stop`, {
+      method: "POST",
+    }),
+};
+
+// Execution History API
+export const executionHistoryAPI = {
+  // Get list of executions for a project
+  list: (projectId: string, filters?: ExecutionHistoryFilters) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.limit) params.set("limit", filters.limit.toString());
+    if (filters?.offset) params.set("offset", filters.offset.toString());
+    const queryString = params.toString();
+    return fetchAPI<ExecutionHistoryItem[]>(
+      `/projects/${projectId}/executions${queryString ? `?${queryString}` : ""}`
+    );
+  },
+
+  // Get detailed execution with all actions
+  getDetail: (executionId: string) =>
+    fetchAPI<ExecutionHistoryDetail>(`/agent/executions/${executionId}/detail`),
+
+  // Get execution statistics for a project
+  getStats: (projectId: string) =>
+    fetchAPI<ExecutionHistoryStats>(`/projects/${projectId}/executions/stats`),
+};
+
+// GitHub Integration API
+export const githubAPI = {
+  // Get integration configuration
+  get: (projectId: string) =>
+    fetchAPI<GitHubIntegration | null>(`/projects/${projectId}/github`),
+
+  // Create or update integration
+  upsert: (projectId: string, data: CreateGitHubIntegration | UpdateGitHubIntegration) =>
+    fetchAPI<{ id: string; created?: boolean; updated?: boolean }>(
+      `/projects/${projectId}/github`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
+
+  // Delete integration
+  delete: (projectId: string) =>
+    fetchAPI<{ success: boolean }>(`/projects/${projectId}/github`, {
+      method: "DELETE",
+    }),
+
+  // Test connection to GitHub
+  testConnection: (projectId: string) =>
+    fetchAPI<GitHubConnectionTestResult>(`/projects/${projectId}/github/test`, {
+      method: "POST",
+    }),
+
+  // Import issues from GitHub
+  import: (
+    projectId: string,
+    options?: { state?: "open" | "closed" | "all"; labels?: string; since?: string }
+  ) =>
+    fetchAPI<GitHubImportResult>(`/projects/${projectId}/github/import`, {
+      method: "POST",
+      body: JSON.stringify(options || {}),
+    }),
+
+  // Export task statuses to GitHub
+  export: (projectId: string, taskId?: string) =>
+    fetchAPI<GitHubExportResult>(`/projects/${projectId}/github/export`, {
+      method: "POST",
+      body: JSON.stringify({ taskId }),
+    }),
+
+  // Get all issue mappings for a project
+  getMappings: (projectId: string) =>
+    fetchAPI<GitHubIssueMapping[]>(`/projects/${projectId}/github/mappings`),
+
+  // Get mapping for a specific task
+  getTaskMapping: (projectId: string, taskId: string) =>
+    fetchAPI<GitHubIssueMapping | null>(
+      `/projects/${projectId}/github/mappings/${taskId}`
+    ),
+
+  // Get sync logs
+  getLogs: (projectId: string, limit?: number) => {
+    const params = limit ? `?limit=${limit}` : "";
+    return fetchAPI<GitHubSyncLog[]>(`/projects/${projectId}/github/logs${params}`);
+  },
 };

@@ -68,6 +68,11 @@ const completeTaskSchema = z.object({
   summary: z.string().describe("A summary of what was accomplished to complete the task"),
 });
 
+const askQuestionSchema = z.object({
+  question: z.string().describe("The clarifying question to ask the user"),
+  context: z.string().optional().describe("Additional context about why this question is being asked"),
+});
+
 // Action types that require approval
 export const REQUIRES_APPROVAL: AgentAction["actionType"][] = [
   "writeFile",
@@ -92,6 +97,7 @@ export type ActionParams = {
   listDirectory: z.infer<typeof listDirectorySchema>;
   executeCommand: z.infer<typeof executeCommandSchema>;
   completeTask: z.infer<typeof completeTaskSchema>;
+  askQuestion: z.infer<typeof askQuestionSchema>;
 };
 
 // Create tools for the AI agent
@@ -103,6 +109,7 @@ export function createAgentTools(callbacks: {
   onDeleteFile: (params: ActionParams["deleteFile"]) => Promise<string>;
   onExecuteCommand: (params: ActionParams["executeCommand"]) => Promise<string>;
   onCompleteTask: (params: ActionParams["completeTask"]) => Promise<string>;
+  onAskQuestion: (params: ActionParams["askQuestion"]) => Promise<string>;
   onProposeAction: (actionType: AgentAction["actionType"], params: unknown) => Promise<void>;
   approvalSettings?: ToolApprovalSettings;
 }) {
@@ -206,6 +213,15 @@ export function createAgentTools(callbacks: {
         return await callbacks.onCompleteTask(params);
       },
     }),
+
+    askQuestion: tool({
+      description: "Ask the user a clarifying question when requirements are ambiguous or more information is needed. This will pause execution until the user responds.",
+      inputSchema: askQuestionSchema,
+      execute: async (params) => {
+        // askQuestion always triggers user interaction - it pauses execution
+        return await callbacks.onAskQuestion(params);
+      },
+    }),
   };
 }
 
@@ -226,6 +242,8 @@ export function getSchemaForActionType(actionType: AgentAction["actionType"]) {
       return executeCommandSchema;
     case "completeTask":
       return completeTaskSchema;
+    case "askQuestion":
+      return askQuestionSchema;
     default:
       throw new Error(`Unknown action type: ${actionType}`);
   }

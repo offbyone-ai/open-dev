@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serveStatic } from "hono/bun";
 import { auth } from "./auth";
-import { handleAPIRoutes } from "./routes";
+import { handleAPIRoutes, handleGitHubWebhookRoutes } from "./routes";
 
 const app = new Hono();
 
@@ -25,6 +25,15 @@ app.use("*", cors({
 // Auth routes - handled by better-auth
 app.all("/api/auth/*", async (c) => {
   return auth.handler(c.req.raw);
+});
+
+// GitHub webhook route - NO auth required (uses signature verification)
+app.post("/api/github/webhook", async (c) => {
+  const response = handleGitHubWebhookRoutes(c.req.raw);
+  if (response) {
+    return response;
+  }
+  return c.json({ error: "Not found" }, 404);
 });
 
 // API routes - require authentication

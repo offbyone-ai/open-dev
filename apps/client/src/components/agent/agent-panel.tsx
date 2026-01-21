@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { Textarea } from "../ui/textarea";
 import { cn } from "../../lib/utils";
 import {
   agentAPI,
@@ -11,8 +12,11 @@ import {
   type AgentActionType,
   type AgentActionStatus,
 } from "../../lib/api";
+import type { AgentReasoningStep } from "@open-dev/shared";
 import { ActionCard } from "./action-card";
+import { ReasoningDisplay } from "./reasoning-display";
 import { ToolApprovalSettingsDialog } from "./tool-approval-settings";
+import { FileChangesPreview } from "./file-changes-preview";
 import {
   Bot,
   Play,
@@ -23,6 +27,10 @@ import {
   CheckCircle2,
   FolderOpen,
   Settings,
+  FileCode,
+  List,
+  MessageCircleQuestion,
+  Send,
 } from "lucide-react";
 
 interface AgentPanelProps {
@@ -44,9 +52,15 @@ interface ActionState {
 interface ActivityLogEntry {
   id: string;
   timestamp: Date;
-  type: "status" | "action" | "text" | "read" | "list" | "error";
+  type: "status" | "action" | "text" | "read" | "list" | "error" | "question";
   message: string;
   details?: string;
+}
+
+interface QuestionState {
+  id: string;
+  question: string;
+  context?: string;
 }
 
 export function AgentPanel({
@@ -63,6 +77,30 @@ export function AgentPanel({
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [reasoningSteps, setReasoningSteps] = useState<AgentReasoningStep[]>([]);
+  const [isReasoningExpanded, setIsReasoningExpanded] = useState(true);
+  const [viewMode, setViewMode] = useState<"diff" | "list">("diff");
+  const [pendingQuestion, setPendingQuestion] = useState<QuestionState | null>(null);
+  const [questionResponse, setQuestionResponse] = useState("");
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
+
+  // Check if there are file-changing actions (for diff view)
+  const hasFileActions = useMemo(
+    () =>
+      actions.some((a) =>
+        ["writeFile", "editFile", "deleteFile"].includes(a.type)
+      ),
+    [actions]
+  );
+
+  // Non-file actions (readFile, listDirectory, executeCommand, completeTask)
+  const nonFileActions = useMemo(
+    () =>
+      actions.filter(
+        (a) => !["writeFile", "editFile", "deleteFile"].includes(a.type)
+      ),
+    [actions]
+  );
 
   // Helper to add activity log entries
   const addLogEntry = useCallback((type: ActivityLogEntry["type"], message: string, details?: string) => {
@@ -99,6 +137,7 @@ export function AgentPanel({
     setActions([]);
     setAgentText("");
     setActivityLog([]);
+    setReasoningSteps([]);
     addLogEntry("status", "Starting agent execution...");
 
     try {
@@ -196,6 +235,22 @@ export function AgentPanel({
                   if (data.content && data.content.trim().length > 0) {
                     addLogEntry("text", "Agent thinking...", data.content);
                   }
+                  break;
+                case "reasoning":
+                  // Add reasoning step from the server
+                  if (data.step) {
+                    setReasoningSteps((prev) => [...prev, data.step]);
+                    addLogEntry("text", `[${data.step.type.toUpperCase()}] ${data.step.content.slice(0, 50)}...`);
+                  }
+                  break;
+                case "question":
+                  // Agent is asking a clarifying question
+                  setPendingQuestion({
+                    id: data.id,
+                    question: data.question,
+                    context: data.context,
+                  });
+                  addLogEntry("question", `Question: ${data.question}`);
                   break;
                 case "error":
                   setError(data.error);
@@ -364,10 +419,120 @@ export function AgentPanel({
     }
   };
 
+  // Submit answer to a question and resume execution
+  const submitAnswer = async () => {
+    if (!executionId || !pendingQuestion || !questionResponse.trim()) return;
+
+    setIsSubmittingAnswer(true);
+    try {
+      // Submit the answer
+      await agentAPI.answerQuestion(executionId, pendingQuestion.id, questionResponse.trim());
+
+      // Clear the question state
+      setPendingQuestion(null);
+      setQuestionResponse("");
+      addLogEntry("status", `Answered: ${questionResponse.trim().slice(0, 50)}...`);
+
+      // Resume the execution
+      const response = await agentAPI.resumeExecution(executionId);
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to resume agent");
+      }
+
+      // Process the SSE stream from resumed execution
+      const reader = response.body?.getReader();
+      if (!reader) return;
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              const eventLine = lines[lines.indexOf(line) - 1];
+              const eventType = eventLine?.startsWith("event: ")
+                ? eventLine.slice(7)
+                : null;
+
+              if (!eventType) continue;
+
+              switch (eventType) {
+                case "status":
+                  setExecutionId(data.executionId);
+                  setStatus(data.status);
+                  addLogEntry("status", `Status: ${data.status.replace("_", " ")}`);
+                  break;
+                case "action":
+                  setActions((prev) => {
+                    const existing = prev.find((a) => a.id === data.id);
+                    if (existing) {
+                      return prev.map((a) =>
+                        a.id === data.id
+                          ? { ...a, status: data.status, result: data.result }
+                          : a
+                      );
+                    }
+                    return [
+                      ...prev,
+                      {
+                        id: data.id,
+                        type: data.type,
+                        params: data.params,
+                        status: data.status,
+                        result: data.result,
+                      },
+                    ];
+                  });
+                  break;
+                case "question":
+                  setPendingQuestion({
+                    id: data.id,
+                    question: data.question,
+                    context: data.context,
+                  });
+                  addLogEntry("question", `Question: ${data.question}`);
+                  break;
+                case "text":
+                  setAgentText((prev) => prev + data.content);
+                  break;
+                case "error":
+                  setError(data.error);
+                  setStatus("failed");
+                  break;
+                case "done":
+                  addLogEntry("status", "Agent finished");
+                  break;
+              }
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit answer");
+    } finally {
+      setIsSubmittingAnswer(false);
+    }
+  };
+
   const proposedActions = actions.filter((a) => a.status === "proposed");
   const approvedActions = actions.filter((a) => a.status === "approved");
   const hasApprovedActions = approvedActions.length > 0;
   const isAwaitingApproval = status === "awaiting_approval";
+  const isAwaitingQuestion = status === "awaiting_question";
 
   return (
     <Card className="h-full flex flex-col">
@@ -458,8 +623,19 @@ export function AgentPanel({
           </div>
         )}
 
-        {/* Activity Log - Shows during analyzing phase */}
-        {status === "analyzing" && activityLog.length > 0 && (
+        {/* Agent Reasoning Display - Shows the agent's thought process */}
+        {reasoningSteps.length > 0 && (
+          <div className="mb-4">
+            <ReasoningDisplay
+              steps={reasoningSteps}
+              isExpanded={isReasoningExpanded}
+              onToggleExpand={() => setIsReasoningExpanded(!isReasoningExpanded)}
+            />
+          </div>
+        )}
+
+        {/* Activity Log - Shows during analyzing phase (when no reasoning steps yet) */}
+        {status === "analyzing" && activityLog.length > 0 && reasoningSteps.length === 0 && (
           <div className="mb-4">
             <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -493,27 +669,104 @@ export function AgentPanel({
           </div>
         )}
 
-        {agentText && (
-          <div className="mb-4 p-3 bg-muted rounded-md">
-            <p className="text-sm whitespace-pre-wrap">{agentText}</p>
-          </div>
-        )}
-
         {actions.length > 0 && (
-          <div className="space-y-3">
-            {actions.map((action) => (
-              <ActionCard
-                key={action.id}
-                id={action.id}
-                type={action.type}
-                params={action.params}
-                status={action.status}
-                result={action.result}
+          <div className="space-y-4">
+            {/* View mode toggle when there are file actions */}
+            {hasFileActions && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Proposed Changes
+                </span>
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant={viewMode === "diff" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 rounded-r-none"
+                    onClick={() => setViewMode("diff")}
+                    title="Diff view"
+                  >
+                    <FileCode className="h-4 w-4 mr-1" />
+                    Diff
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 rounded-l-none"
+                    onClick={() => setViewMode("list")}
+                    title="List view"
+                  >
+                    <List className="h-4 w-4 mr-1" />
+                    List
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* File changes diff preview */}
+            {hasFileActions && viewMode === "diff" && (
+              <FileChangesPreview
+                projectId={project.id}
+                actions={actions}
                 isAwaitingApproval={isAwaitingApproval}
-                onApprove={() => approveAction(action.id)}
-                onReject={() => rejectAction(action.id)}
+                onApprove={approveAction}
+                onReject={rejectAction}
+                onApproveAll={approveAll}
+                onRejectAll={async () => {
+                  const ids = actions
+                    .filter(
+                      (a) =>
+                        a.status === "proposed" &&
+                        ["writeFile", "editFile", "deleteFile"].includes(a.type)
+                    )
+                    .map((a) => a.id);
+                  for (const id of ids) {
+                    await rejectAction(id);
+                  }
+                }}
               />
-            ))}
+            )}
+
+            {/* Non-file actions (always shown as cards) */}
+            {nonFileActions.length > 0 && (
+              <div className="space-y-3">
+                {nonFileActions.map((action) => (
+                  <ActionCard
+                    key={action.id}
+                    id={action.id}
+                    type={action.type}
+                    params={action.params}
+                    status={action.status}
+                    result={action.result}
+                    isAwaitingApproval={isAwaitingApproval}
+                    onApprove={() => approveAction(action.id)}
+                    onReject={() => rejectAction(action.id)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* File actions in list view mode */}
+            {hasFileActions && viewMode === "list" && (
+              <div className="space-y-3">
+                {actions
+                  .filter((a) =>
+                    ["writeFile", "editFile", "deleteFile"].includes(a.type)
+                  )
+                  .map((action) => (
+                    <ActionCard
+                      key={action.id}
+                      id={action.id}
+                      type={action.type}
+                      params={action.params}
+                      status={action.status}
+                      result={action.result}
+                      isAwaitingApproval={isAwaitingApproval}
+                      onApprove={() => approveAction(action.id)}
+                      onReject={() => rejectAction(action.id)}
+                    />
+                  ))}
+              </div>
+            )}
           </div>
         )}
 

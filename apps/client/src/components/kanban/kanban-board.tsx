@@ -182,6 +182,7 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick, onAddTask }: Kanba
             id={column.id}
             title={column.title}
             tasks={getTasksByStatus(column.id)}
+            allTasks={tasks}
             onTaskClick={onTaskClick}
             onAddTask={() => onAddTask(column.id)}
           />
