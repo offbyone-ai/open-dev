@@ -16,14 +16,14 @@ import { DefaultChatTransport } from "ai";
 import { KanbanBoard } from "../components/kanban/kanban-board";
 import { TaskForm } from "../components/kanban/task-form";
 import { ChatPanel } from "../components/chat/chat-panel";
-import { AgentPanel, WorkingDirectorySetup } from "../components/agent";
+import { AgentPanel, WorkingDirectorySetup, ExecutionHistoryPanel, ExecutionDetailView } from "../components/agent";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Select } from "../components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
-import { ArrowLeft, Settings, MessageSquare, Kanban, Sparkles, Loader2, Bot } from "lucide-react";
+import { ArrowLeft, Settings, MessageSquare, Kanban, Sparkles, Loader2, Bot, History } from "lucide-react";
 
 export function ProjectPage() {
   const { projectId } = useParams({ from: "/project/$projectId" });
@@ -48,6 +48,10 @@ export function ProjectPage() {
   const [agentTask, setAgentTask] = useState<Task | null>(null);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [showWorkingDirSetup, setShowWorkingDirSetup] = useState(false);
+
+  // Execution history states
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -204,6 +208,18 @@ export function ProjectPage() {
               <MessageSquare className="h-4 w-4 mr-2" />
               AI Chat
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowHistoryPanel(true);
+                setSelectedExecutionId(null);
+              }}
+              title="Execution History"
+            >
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Button>
             <Button variant="outline" size="icon" onClick={() => setShowSettings(true)}>
               <Settings className="h-4 w-4" />
             </Button>
@@ -247,6 +263,28 @@ export function ProjectPage() {
             />
           </div>
         )}
+
+        {/* Execution History Panel */}
+        {showHistoryPanel && project && (
+          <div className="fixed right-0 top-[57px] bottom-0 w-96 border-l bg-background overflow-hidden">
+            {selectedExecutionId ? (
+              <ExecutionDetailView
+                executionId={selectedExecutionId}
+                onBack={() => setSelectedExecutionId(null)}
+                onClose={() => {
+                  setShowHistoryPanel(false);
+                  setSelectedExecutionId(null);
+                }}
+              />
+            ) : (
+              <ExecutionHistoryPanel
+                projectId={project.id}
+                onViewDetail={(id) => setSelectedExecutionId(id)}
+                onClose={() => setShowHistoryPanel(false)}
+              />
+            )}
+          </div>
+        )}
       </main>
 
       {/* Task Form Dialog */}
@@ -258,6 +296,8 @@ export function ProjectPage() {
         }}
         task={editingTask}
         defaultStatus={newTaskStatus}
+        projectId={projectId}
+        allTasks={tasks}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
         onDelete={editingTask ? handleDeleteTask : undefined}
         hasAIProvider={!!project.aiProviderId}

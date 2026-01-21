@@ -10,11 +10,12 @@ interface KanbanColumnProps {
   id: TaskStatus;
   title: string;
   tasks: Task[];
+  allTasks: Task[]; // All tasks for dependency checking
   onTaskClick: (task: Task) => void;
   onAddTask: () => void;
 }
 
-export function KanbanColumn({ id, title, tasks, onTaskClick, onAddTask }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, tasks, allTasks, onTaskClick, onAddTask }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { type: "column", status: id },
@@ -45,6 +46,7 @@ export function KanbanColumn({ id, title, tasks, onTaskClick, onAddTask }: Kanba
             <TaskCard
               key={task.id}
               task={task}
+              allTasks={allTasks}
               onClick={() => onTaskClick(task)}
             />
           ))}
